@@ -177,7 +177,10 @@ pair<int, vector<int>> dfsWithConditions(int node, unordered_set<int>& visited, 
 
     for (int neighbor : graph[node]) {
         if (visited.find(neighbor) == visited.end() && ignoredNodes.find(neighbor) == ignoredNodes.end()) {
-            auto [length, path] = dfsWithConditions(neighbor, visited, ignoredNodes);
+            pair<int, vector<int>> res = dfsWithConditions(neighbor, visited, ignoredNodes);
+            int length = res.first;
+            vector<int> path = res.second;
+
             if (length + 1 > maxLength) {
                 maxLength = length + 1;
                 longestPath = {node};
@@ -194,12 +197,15 @@ vector<int> findLongestCarbonChain(int startNode, const unordered_set<int>& igno
     unordered_set<int> visited;
 
     // Step 1: First DFS to find the farthest node from startNode
-    auto [_, farthestNodePath] = dfsWithConditions(startNode, visited, ignoredNodes);
+    pair<int, vector<int>> res1 = dfsWithConditions(startNode, visited, ignoredNodes);
+    vector<int> farthestNodePath = res1.second;
+
     int farthestNode = farthestNodePath.back();
 
     // Step 2: Second DFS from the farthest node found in the first DFS
     visited.clear();
-    auto [longestChainLength, longestChainPath] = dfsWithConditions(farthestNode, visited, ignoredNodes);
+    pair<int, vector<int>> res2 = dfsWithConditions(farthestNode, visited, ignoredNodes);
+    vector<int> longestChainPath = res2.second;
 
     return longestChainPath; // Returns the path (chain of nodes) in one direction
 }
@@ -443,7 +449,8 @@ vector<int> findLongestChainWithCOOH(const unordered_set<int>& coohNodes, const 
     for (int coohNode : coohNodes) {
         unordered_set<int> visited;
         // Start DFS from the COOH node
-        auto [_, path] = dfsWithConditions(coohNode, visited, ignoredNodes);
+        pair<int, vector<int>> res = dfsWithConditions(coohNode, visited, ignoredNodes);
+        vector<int> path = res.second;
 
         // Keep track of the longest path found
         if (path.size() > longestChain.size()) {
@@ -549,8 +556,11 @@ string processMolecularGraph(MolecularGraph& graph1, int hint) {
         for (int neighbor : graph[atom]) {
             if (ignoredNodes.find(neighbor) == ignoredNodes.end() && find(optimalChain.begin(), optimalChain.end(), neighbor) == optimalChain.end()) {
                 // Neighbor is a branch starting point, call countBranchCarbons
-                auto [numCarbonsInBranch, halogenPresent] = countBranchCarbons(neighbor, unordered_set<int>(optimalChain.begin(), optimalChain.end()), idToLabel);
-                branchInfo[atom] = {numCarbonsInBranch, halogenPresent};
+                pair<int, int> branch = countBranchCarbons(neighbor, unordered_set<int>(optimalChain.begin(), optimalChain.end()), idToLabel);
+                vector<int> data;
+                data.push_back(branch.first);
+                data.push_back(branch.second);
+                branchInfo[atom] = data;
             }
         }
     }
