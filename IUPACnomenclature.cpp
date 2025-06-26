@@ -60,59 +60,99 @@ public:
 
         for (size_t i = 0; i < formula.size();) {
             char ch = formula[i];
-            string label(1, ch);
 
-            if (ch == 'C') {
-                if (i + 1 < formula.size() && formula[i + 1] == 'l') {
-                    label = "Cl";
-                    carbons[counter - 1].incrementC_X();
-                    i++;
-                } else if (i + 1 < formula.size() && formula[i + 1] == 'O') {
-                    label = "COOH";
-                    i += 3;
-                }
-
-                addCarbon(label);
+            // --- Handle COOH Group ---
+            if (i + 3 < formula.size() && formula.substr(i, 4) == "COOH") {
+                addCarbon("COOH");
                 int currentCarbon = counter - 1;
+                if (previousCarbon != 0) addEdge(previousCarbon, currentCarbon);
+                previousCarbon = currentCarbon;
+                i += 4;
+                continue;
+            }
 
-                if (i + 1 < formula.size() && formula[i + 1] == 'H') {
+            // --- Handle Carbon Atoms ---
+            if (ch == 'C') {
+                addCarbon("C");
+                int currentCarbon = counter - 1;
+                i++;
+
+                // Check for H (e.g., CH3)
+                if (i < formula.size() && formula[i] == 'H') {
                     int numH = 1;
                     i++;
-                    if (i + 1 < formula.size() && isdigit(formula[i + 1])) {
-                        numH = formula[i + 1] - '0';
+                    if (i < formula.size() && isdigit(formula[i])) {
+                        numH = formula[i] - '0';
                         i++;
                     }
                     carbons[currentCarbon].incrementC_H(numH);
                 }
 
+                // Check for Cl, Br, F, I right after CHx
+                if (i + 1 < formula.size()) {
+                    string next2 = formula.substr(i, 2);
+                    if (next2 == "Cl" || next2 == "Br") {
+                        carbons[currentCarbon].incrementC_X();
+                        i += 2;
+                    } else if (formula[i] == 'F' || formula[i] == 'I') {
+                        carbons[currentCarbon].incrementC_X();
+                        i++;
+                    }
+                }
+
                 if (previousCarbon != 0) {
                     addEdge(previousCarbon, currentCarbon);
                 }
-
                 previousCarbon = currentCarbon;
-                i++;
-            } else if (ch == '(') {
+                continue;
+            }
+
+            // --- Handle Branch Start ---
+            if (ch == '(') {
                 branchPoints.push(previousCarbon);
                 i++;
-            } else if (ch == ')') {
+                continue;
+            }
+
+            // --- Handle Branch End ---
+            if (ch == ')') {
                 if (!branchPoints.empty()) {
                     previousCarbon = branchPoints.top();
                     branchPoints.pop();
                 }
                 i++;
-            } else {
-                if (isalpha(ch)) {
-                    string halogenLabel(1, ch);
-                    if (i + 1 < formula.size() && islower(formula[i + 1])) {
-                        halogenLabel += formula[i + 1];
-                        i++;
+                continue;
+            }
+
+            // --- Handle Halogen as Direct Label (e.g., CH3CH2CH(Cl)CH3) ---
+            if (isalpha(ch)) {
+                string halogenLabel(1, ch);
+                if (i + 1 < formula.size() && islower(formula[i + 1])) {
+                    halogenLabel += formula[i + 1];
+                }
+
+                if (halogenLabel == "Cl" || halogenLabel == "Br") {
+                    if (previousCarbon != 0) {
+                        carbons[previousCarbon].incrementC_X();
                     }
+                    i += 2;
+                } else if (ch == 'F' || ch == 'I') {
+                    if (previousCarbon != 0) {
+                        carbons[previousCarbon].incrementC_X();
+                    }
+                    i++;
+                } else {
+                    // Unknown label – treat as separate carbon or atom (fallback)
                     addCarbon(halogenLabel);
                     int currentAtom = counter - 1;
-
+                    if (previousCarbon != 0) {
+                        addEdge(previousCarbon, currentAtom);
+                    }
                     previousCarbon = currentAtom;
-                    i++;
+                    i += halogenLabel.length();
                 }
+            } else {
+                i++; // Skip unknown or malformed characters
             }
         }
     }
@@ -236,7 +276,6 @@ vector<int> getOptimalChainDirection(const vector<int>& chain, const unordered_m
         return vector<int>(chain.rbegin(), chain.rend()); // Reverse for right-to-left
     }
 }
-
 
 
 string formatBranchName(int numCarbons, int halogenType) {
@@ -541,22 +580,19 @@ string processMolecularGraph(MolecularGraph& graph1, int hint) {
         longestChain = findLongestCarbonChain(startNode, ignoredNodes);
     }
 
-    vector<int> optimalChain = getOptimalChainDirection(longestChain, branchInfo);
-    if(hint == 1) counter = 2;
-
-    // Print the longest carbon chain using node labels
-    cout << "Longest carbon chain: ";
-    for (int node : optimalChain) {
-        cout << idToLabel[node] << " ";
-    }
-    cout << endl;
-
-    // Step 3: Store branch information
-    for (int atom : optimalChain) {
+    // Step 2: Store branch information on the original chain
+    for (int atom : longestChain) {
         for (int neighbor : graph[atom]) {
-            if (ignoredNodes.find(neighbor) == ignoredNodes.end() && find(optimalChain.begin(), optimalChain.end(), neighbor) == optimalChain.end()) {
-                // Neighbor is a branch starting point, call countBranchCarbons
-                pair<int, int> branch = countBranchCarbons(neighbor, unordered_set<int>(optimalChain.begin(), optimalChain.end()), idToLabel);
+            if (ignoredNodes.find(neighbor) == ignoredNodes.end() &&
+                find(longestChain.begin(), longestChain.end(), neighbor) == longestChain.end()) {
+                
+                // Neighbor is a branch starting point
+                pair<int, int> branch = countBranchCarbons(
+                    neighbor,
+                    unordered_set<int>(longestChain.begin(), longestChain.end()),
+                    idToLabel
+                );
+
                 vector<int> data;
                 data.push_back(branch.first);
                 data.push_back(branch.second);
@@ -565,7 +601,39 @@ string processMolecularGraph(MolecularGraph& graph1, int hint) {
         }
     }
 
-    // Step 4: Generate IUPAC name with '-oic acid' if COOH is present
+    // Step 3: Decide best direction using branch info
+    vector<int> optimalChain = getOptimalChainDirection(longestChain, branchInfo);
+    // ✅ Step 2.5: Handle halogen branches directly from C_X bonds
+    for (int atom : optimalChain) {
+        const CarbonNode& carbon = graph1.carbons[atom];
+
+        // Only consider halogen branches
+        if (carbon.C_X_bonds > 0) {
+            int halogenType = 1;  // Default to chlorine for now
+
+            const string& label = carbon.label;
+            if (label.find("Cl") != string::npos) halogenType = 1;
+            else if (label.find("Br") != string::npos) halogenType = 2;
+            else if (label.find("F") != string::npos)  halogenType = 3;
+            else if (label.find("I") != string::npos)  halogenType = 4;
+
+            vector<int> data;
+            data.push_back(0);         // 0 carbon atoms in halogen
+            data.push_back(halogenType);
+            branchInfo[atom] = data;
+        }
+    }
+
+    if (hint == 1) counter = 2;
+
+    // Print the longest carbon chain using node labels
+    cout << "Longest carbon chain: ";
+    for (int node : optimalChain) {
+        cout << idToLabel[node] << " ";
+    }
+    cout << endl;
+
+    // Step 4: Generate IUPAC name (append -oic acid if needed)
     string iupacName = generateIUPACName(optimalChain, idToLabel, branchInfo, counter);
     if (!coohNodes.empty()) {
         iupacName += "oic acid";
