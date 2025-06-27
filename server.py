@@ -1,10 +1,14 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 import subprocess
 
 app = Flask(__name__)
 
 @app.route('/')
 def home():
+    return render_template("home.html")
+
+@app.route('/toolkit')
+def toolkit_page():
     return render_template("index.html")
 
 @app.route('/get_iupac', methods=['POST'])
