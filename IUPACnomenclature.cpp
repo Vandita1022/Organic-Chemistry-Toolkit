@@ -656,9 +656,6 @@ string generateIUPACNameForGraph(MolecularGraph& graph) {
     
 }
 
-
-// -------------------- Main Code --------------------
-
 int main() {
     MolecularGraph graph;
     string formula;
