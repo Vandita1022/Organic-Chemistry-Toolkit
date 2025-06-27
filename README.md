@@ -1,2 +1,2 @@
 # Organic-Chemistry-Toolkit
-Module to instantiate Carbon Compoundswith nomenclature utilities
+Module to instantiate Carbon Compounds with nomenclature utilities

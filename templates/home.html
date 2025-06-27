@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Organic Chemistry Toolkit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow-x: hidden;
+      background: transparent;
+      font-family: 'Courier New', monospace;
+      color: white;
+    }
+
+    #bgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: auto;
+      padding: 4rem 1rem;
+      background: transparent;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 2rem;
+    }
+
+    .card {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    .btn {
+      display: block;
+      margin: 2rem auto 0;
+      padding: 0.8rem 1.5rem;
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: scale(1.01);
+      transition: transform 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Canvas -->
+  <canvas id="bgCanvas"></canvas>
+
+  <!-- Page Content -->
+  <div class="container">
+    <h1>Welcome to the Organic Chemistry Toolkit 🧪</h1>
+
+    <div class="card">
+      <h2>📘 About the Project</h2>
+      <p>
+        This toolkit allows you to input simple molecular formulas like <code>CH3CH2CH3</code>
+        and get the corresponding IUPAC name and structure breakdown.
+        It’s designed to help chemistry learners understand structure–name relationships.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>✅ What It Can Name</h2>
+      <ul>
+        <li>Linear alkanes and alkyl chains</li>
+        <li>Carboxylic acids (COOH)</li>
+        <li>Halogen substituents (Cl, Br, F, I)</li>
+        <li>Simple ethers (e.g., CH3CH2-O-CH3)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>⚠️ Limitations</h2>
+      <ul>
+        <li>No stereochemistry (R/S, E/Z)</li>
+        <li>No ring structures (e.g., cyclohexane)</li>
+        <li>No multiple bonds yet (double/triple)</li>
+        <li>No multi-functional priority rules</li>
+      </ul>
+    </div>
+
+    <button class="btn" onclick="window.location.href='/toolkit'">Explore the Toolkit →</button>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.141.0/build/three.min.js"></script>
+  <script src="{{ url_for('static', filename='js/floating_bg.js') }}"></script>
+
+</body>
+</html>
