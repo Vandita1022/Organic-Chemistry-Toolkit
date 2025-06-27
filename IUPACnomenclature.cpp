@@ -250,7 +250,7 @@ vector<int> findLongestCarbonChain(int startNode, const unordered_set<int>& igno
     return longestChainPath; // Returns the path (chain of nodes) in one direction
 }
 
-vector<int> getOptimalChainDirection(const vector<int>& chain, const unordered_map<int, vector<int>>& branchInfo) {
+vector<int> getOptimalChainDirection(const vector<int>& chain, const unordered_map<int, vector<pair<int, int>>>& branchInfo) {
     vector<int> leftLocants, rightLocants;
 
     // Calculate left-to-right locants for branches
@@ -279,9 +279,19 @@ vector<int> getOptimalChainDirection(const vector<int>& chain, const unordered_m
 
 
 string formatBranchName(int numCarbons, int halogenType) {
-    string branchName;
+    // For halogens, return just the halogen name
+    if (halogenType > 0) {
+        switch (halogenType) {
+            case 1: return "chloro";
+            case 2: return "bromo";
+            case 3: return "fluoro";
+            case 4: return "iodo";
+            default: return "halo";
+        }
+    }
 
-    // Set the branch name based on the number of carbons
+    // For alkyl branches
+    string branchName;
     if (numCarbons == 1) {
         branchName = "methyl";
     } else if (numCarbons == 2) {
@@ -290,24 +300,6 @@ string formatBranchName(int numCarbons, int halogenType) {
         branchName = "propyl";
     } else if (numCarbons == 4) {
         branchName = "butyl";
-    } 
-    // else {
-    //     branchName = to_string(numCarbons) + "-butyl";  // For simplicity, use "butyl" as a generic name for larger chains
-    // }
-
-    // Add the specific halogen prefix if halogenType is set
-    if (halogenType > 0) {
-        switch (halogenType) {
-            case 1:
-                branchName = "chloro-" + branchName;
-                break;
-            case 2:
-                branchName = "bromo-" + branchName;
-                break;
-            // Add other cases for additional halogens as needed
-            default:
-                branchName = "halo-" + branchName;  // Fallback for unspecified halogens
-        }
     }
 
     return branchName;
@@ -364,7 +356,7 @@ vector<string> combineBranches(const vector<string>& branches) {
 
 
 
-string generateIUPACName(const vector<int>& longestChain, const unordered_map<int, string>& idToLabel, unordered_map<int, vector<int>>& branchInfo, int counter) {
+string generateIUPACName(const vector<int>& longestChain, const unordered_map<int, string>& idToLabel, unordered_map<int, vector<pair<int, int>>>& branchInfo, int counter) {
     int numCarbons = longestChain.size();
     string chainName;
     if (numCarbons == 1) chainName = "Meth";
@@ -397,11 +389,14 @@ string generateIUPACName(const vector<int>& longestChain, const unordered_map<in
     for (size_t i = 0; i < longestChain.size(); i++) {
         int atom = longestChain[i];
         if (branchInfo.find(atom) != branchInfo.end()) {
-            int numCarbonsInBranch = branchInfo[atom][0];
-            int halogenType = branchInfo[atom][1];
-            string branchName = formatBranchName(numCarbonsInBranch, halogenType);
-            int locant = i + 1;  // 1-based locant
-            branches.push_back(to_string(locant) + "-" + branchName);
+            // Process ALL branches for this atom
+            for (const pair<int, int>& branch : branchInfo[atom]) {
+                int numCarbonsInBranch = branch.first;
+                int halogenType = branch.second;
+                string branchName = formatBranchName(numCarbonsInBranch, halogenType);
+                int locant = i + 1;  // 1-based locant
+                branches.push_back(to_string(locant) + "-" + branchName);
+            }
         }
     }
 
@@ -414,9 +409,14 @@ string generateIUPACName(const vector<int>& longestChain, const unordered_map<in
     // Combine branch information with the main chain name
     string finalName;
     for (const string& branch : combinedBranches) {
-        finalName += branch + " ";
+        if (!finalName.empty()) finalName += "-";
+        finalName += branch;
     }
-    finalName += chainName; // Append main chain name after branches
+    if (!finalName.empty()) {
+        finalName += chainName;
+    } else {
+        finalName = chainName;
+    }
 
     return finalName;
 }
@@ -520,7 +520,7 @@ string processMolecularGraph(MolecularGraph& graph1, int hint) {
     unordered_map<int, string> idToLabel;
     int currentID = 0;
     unordered_set<int> coohNodes;  // Set to store COOH node IDs
-    unordered_map<int, vector<int>> branchInfo;
+    unordered_map<int, vector<pair<int, int>>> branchInfo;
 
     unordered_set<int> ignoredNodes;
 
@@ -580,8 +580,35 @@ string processMolecularGraph(MolecularGraph& graph1, int hint) {
         longestChain = findLongestCarbonChain(startNode, ignoredNodes);
     }
 
-    // Step 2: Store branch information on the original chain
+    // Step 2: Store branch information AND halogen information on the original chain
     for (int atom : longestChain) {
+        // First, check for halogens directly on this carbon
+        int graphAtomId = -1;
+        string atomLabel = idToLabel[atom];
+        for (const auto& pair : graph1.carbons) {
+            if (pair.second.label + to_string(pair.second.id) == atomLabel) {
+                graphAtomId = pair.first;
+                break;
+            }
+        }
+
+        if (graphAtomId != -1) {
+            const CarbonNode& carbon = graph1.carbons[graphAtomId];
+            
+            if (carbon.C_X_bonds > 0) {
+                int halogenType = 1;  // Default to chlorine for now
+                
+                const string& label = carbon.label;
+                if (label.find("Cl") != string::npos) halogenType = 1;
+                else if (label.find("Br") != string::npos) halogenType = 2;
+                else if (label.find("F") != string::npos)  halogenType = 3;
+                else if (label.find("I") != string::npos)  halogenType = 4;
+                
+                branchInfo[atom].push_back(make_pair(0, halogenType));
+            }
+        }
+        
+        // Then check for carbon branches
         for (int neighbor : graph[atom]) {
             if (ignoredNodes.find(neighbor) == ignoredNodes.end() &&
                 find(longestChain.begin(), longestChain.end(), neighbor) == longestChain.end()) {
@@ -593,36 +620,14 @@ string processMolecularGraph(MolecularGraph& graph1, int hint) {
                     idToLabel
                 );
 
-                vector<int> data;
-                data.push_back(branch.first);
-                data.push_back(branch.second);
-                branchInfo[atom] = data;
+                // Add ALL branches (no more overwriting)
+                branchInfo[atom].push_back(branch);
             }
         }
     }
 
-    // Step 3: Decide best direction using branch info
+    // Step 3: Decide best direction using branch info (now includes halogens)
     vector<int> optimalChain = getOptimalChainDirection(longestChain, branchInfo);
-    // ✅ Step 2.5: Handle halogen branches directly from C_X bonds
-    for (int atom : optimalChain) {
-        const CarbonNode& carbon = graph1.carbons[atom];
-
-        // Only consider halogen branches
-        if (carbon.C_X_bonds > 0) {
-            int halogenType = 1;  // Default to chlorine for now
-
-            const string& label = carbon.label;
-            if (label.find("Cl") != string::npos) halogenType = 1;
-            else if (label.find("Br") != string::npos) halogenType = 2;
-            else if (label.find("F") != string::npos)  halogenType = 3;
-            else if (label.find("I") != string::npos)  halogenType = 4;
-
-            vector<int> data;
-            data.push_back(0);         // 0 carbon atoms in halogen
-            data.push_back(halogenType);
-            branchInfo[atom] = data;
-        }
-    }
 
     if (hint == 1) counter = 2;
 
