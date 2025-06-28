@@ -70,6 +70,14 @@
       transform: scale(1.01);
       transition: transform 0.3s ease;
     }
+     /* Add this to your existing style block */
+    .section-title {
+      display: inline-block;
+      border-bottom: 3px solid white;
+      padding-bottom: 5px;
+      margin-bottom: 1rem;
+    }
+
   </style>
 </head>
 <body>
@@ -82,7 +90,7 @@
     <h1>Welcome to the Organic Chemistry Toolkit 🧪</h1>
 
     <div class="card">
-      <h2>📘 About the Project</h2>
+      <h2 class="section-title">About the Project</h2>
       <p>
         This toolkit allows you to input simple molecular formulas like <code>CH3CH2CH3</code>
         and get the corresponding IUPAC name and structure breakdown.
@@ -91,24 +99,26 @@
     </div>
 
     <div class="card">
-      <h2>✅ What It Can Name</h2>
+      <h2 class="section-title">Supported Features</h2> 
       <ul>
-        <li>Linear alkanes and alkyl chains</li>
-        <li>Carboxylic acids (COOH)</li>
+        <li>Linear alkanes and single branching, including nested branches within one substituent
+          (e.g., CH₃CH(CH₂CH(CH₂CH₃)CH₃)CH₂CH₃)</li>
+        <li>Carboxylic acids (–COOH)</li>
+        <li>Simple cyclic compounds</li>
         <li>Halogen substituents (Cl, Br, F, I)</li>
-        <li>Simple ethers (e.g., CH3CH2-O-CH3)</li>
+        <li>Simple ethers (e.g., CH₃CH₂–O–CH₃)</li>
       </ul>
     </div>
-
+    
     <div class="card">
-      <h2>⚠️ Limitations</h2>
+      <h2 class="section-title">Pending Features </h2> 
       <ul>
-        <li>No stereochemistry (R/S, E/Z)</li>
-        <li>No ring structures (e.g., cyclohexane)</li>
-        <li>No multiple bonds yet (double/triple)</li>
-        <li>No multi-functional priority rules</li>
+        <li>Supports up to two branches only (e.g., cannot parse CH₃CH₂(CH₂CH₃)CH₂CH₂(CH₃)CH₃)</li>
+        <li>No support for double or triple bonds</li>
+        <li>Functional group priority rules not yet implemented</li>
       </ul>
     </div>
+    
 
     <button class="btn" onclick="window.location.href='/toolkit'">Explore the Toolkit →</button>
   </div>
