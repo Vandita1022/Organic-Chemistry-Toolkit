@@ -15,7 +15,7 @@ def toolkit_page():
 def get_iupac():
     formula = request.json['formula']
     try:
-        result = subprocess.run(["./toolkit"], input=formula.encode(), capture_output=True, timeout=5)
+        result = subprocess.run(["./toolkitnew"], input=formula.encode(), capture_output=True, timeout=5)
         output = result.stdout.decode()
         return jsonify({"output": output})
     except Exception as e:
