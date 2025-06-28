@@ -1,128 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Organic Chemistry Toolkit</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: transparent;
-            color: white;
-            font-family: 'Courier New', monospace;
-            height: 100%;
-            width: 100%;
-        }
+  <meta charset="UTF-8" />
+  <title>Organic Chemistry Toolkit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: transparent;
+      color: white;
+      font-family: 'Courier New', monospace;
+      height: 100%;
+      width: 100%;
+    }
 
-        #bgCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: -1;
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
+    #bgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
 
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 600px;
-            margin: 10vh auto;
-            padding: 2rem;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
-        }
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 600px;
+      margin: 10vh auto;
+      padding: 2rem;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      text-align: center;
+    }
 
-        input[type="text"] {
-            padding: 10px;
-            width: 80%;
-            max-width: 300px;
-            font-size: 16px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
+    input[type="text"] {
+      padding: 10px;
+      width: 80%;
+      max-width: 300px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
 
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background: white;
-            color: black;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
 
-        pre {
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            text-align: left;
-        }
+    pre {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      text-align: left;
+    }
 
-        /* Top-left Home text link */
-        .home-link {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 2;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            cursor: pointer;
-        }
+    .home-link {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 2;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+    }
 
-        .home-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+    .home-link:hover {
+      text-decoration: underline;
+    }
+
+    #warningBox {
+      display: none;
+      margin-top: 12px;
+      padding: 8px 12px;
+      background-color: rgba(0, 0, 0, 0.6);
+      border: 1px solid white;
+      border-radius: 6px;
+      font-size: 14px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Background Canvas -->
-    <canvas id="bgCanvas"></canvas>
+  <canvas id="bgCanvas"></canvas>
 
-    <!-- Top-left Home Text Link -->
-    <a href="{{ url_for('home') }}" class="home-link">Home</a>
+  <a href="{{ url_for('home') }}" class="home-link">Home</a>
 
-    <!-- Main Content -->
-    <div class="container">
-        <h1>Organic Chemistry Toolkit 🧪</h1>
-        <p>Enter Molecular Formula:</p>
-        <input type="text" id="formula" placeholder="e.g. CH3CH2CH3" />
-        <br>
-        <button onclick="submitFormula()">Submit</button>
-        <pre id="output"></pre>
-    </div>
+  <div class="container">
+    <h1>Organic Chemistry Toolkit</h1>
+    <p>Enter Molecular Formula:</p>
+    <input type="text" id="formula" placeholder="e.g. CH3CH2CH3" />
+    <br>
+    <button onclick="submitFormula()">Submit</button>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.141.0/build/three.min.js"></script>
-    <script src="{{ url_for('static', filename='js/floating_bg.js') }}"></script>
+    <!-- ⚠️ Warning Box below the button -->
+    <div id="warningBox">&#9888; Please enter a molecular formula before submitting.</div>
 
-    <script>
-        async function submitFormula() {
-            const formula = document.getElementById("formula").value;
-            const response = await fetch("/get_iupac", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ formula: formula })
-            });
-            const data = await response.json();
-            document.getElementById("output").textContent = data.output || data.error;
-        }
-    </script>
+    <pre id="output"></pre>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.141.0/build/three.min.js"></script>
+  <script src="{{ url_for('static', filename='js/floating_bg.js') }}"></script>
+
+  <script>
+    async function submitFormula() {
+      const formulaInput = document.getElementById("formula");
+      const formula = formulaInput.value.trim();
+      const warningBox = document.getElementById("warningBox");
+      const output = document.getElementById("output");
+
+      warningBox.style.display = "none";
+      output.textContent = "";
+
+      if (!formula) {
+        warningBox.style.display = "block";
+        setTimeout(() => {
+          warningBox.style.display = "none";
+        }, 3000);
+        return;
+      }
+
+      try {
+        const response = await fetch("/get_iupac", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ formula })
+        });
+
+        const data = await response.json();
+        output.textContent = data.output || data.error;
+      } catch (err) {
+        output.textContent = "An error occurred. Please try again.";
+      }
+    }
+  </script>
 </body>
 </html>
